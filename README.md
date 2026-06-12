@@ -1,2 +1,3 @@
 # AIReactPatternChatBot
-React based chat bot connected to Open AI
+React based chat bot connected to gemin
+
