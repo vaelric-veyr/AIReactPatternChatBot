@@ -3,12 +3,26 @@ import re
 import httpx
 import os
 from dotenv import load_dotenv
+import chromadb
 
 _ = load_dotenv()
 from google import genai
 
+chroma_client = chromadb.Client()
+collection = chroma_client.create_collection("knowledge")
 
-action_re = re.compile('^Action: (\\w+): (.*)$')   # python regular expression to selection action
+collection.add(
+    documents=[
+        "python is a programming language known for simplicity.",
+        "chromadb is a vector database for storing and searching documents.",
+        "RAG stands for Retrieval-Augmented Generation. It fetches relevant documents before answering.",
+        "An AI agent can think, act and use tools to complete tasks.",
+        "Lanchain is a framework for building AI agents that can use tools and access external data.",
+    ],
+    ids=["doc1", "doc2", "doc3", "doc4", "doc5"]
+)
+
+action_re = re.compile('^Action: (\\w+): (.*)$')  
 
 prompt = """
 You run in a loop of Thought, Action, PAUSE, Observation.
@@ -27,6 +41,10 @@ average_dog_weight:
 e.g. average_dog_weight: Collie
 returns average weight of a dog when given the breed
 
+search_knowledge_base:
+e.g. search_knowledge_base: What is RAG?
+Searches the knowledge base and returns relevant information
+
 Example session:
 
 Question: How much does a Bulldog weigh?
@@ -44,7 +62,7 @@ Answer: A bulldog weights 51 lbs
 """.strip()
 
 
-client = genai.Client("api_key")
+client = genai.Client()
 
 chat_completion = client.models.generate_content(
     model="gemini-2.5-flash",
@@ -102,12 +120,18 @@ def average_dog_weight(name):
     else:
         return("An average dog weights 50 lbs")
 
+def search_knowledge_base(query):
+    results = collection.query(
+        query_texts=[query],
+        n_results=2
+    )
+    return " | ".join(results['documents'][0])
+
 known_actions = {
     "calculate": calculate,
-    "average_dog_weight": average_dog_weight
+    "average_dog_weight": average_dog_weight,
+    "search_knowledge_base": search_knowledge_base
 }
-
-
 
 def query(question, max_turns=5):
     i = 0
@@ -135,7 +159,7 @@ def query(question, max_turns=5):
         return
 
 
-question = """Tell me a joke, and then calculate 7 * 8, and then tell me the average weight of a Border Collie"""
+question = """What is RAG and how does it work?"""
 query(question)
 
 
