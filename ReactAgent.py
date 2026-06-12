@@ -64,19 +64,6 @@ Answer: A bulldog weights 51 lbs
 
 client = genai.Client()
 
-chat_completion = client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents=[
-        {
-            "role": "user",
-            "parts": [
-                {"text": "Hello world"}
-            ]
-        }
-    ]
-)
-
-
 class Agent:
     
 
